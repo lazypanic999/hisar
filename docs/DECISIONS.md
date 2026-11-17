@@ -6,6 +6,12 @@ Her kayıt: tarih, karar, alternatifler, neden. En yeni kayıt en üstte. Her fa
 
 ## Faz 0
 
+### 2026-11-17: TypeScript 6.x'e sabitlendi
+
+- **Karar:** `typescript` bağımlılığı `^6` aralığında tutulur.
+- **Alternatifler:** TypeScript 7 ile devam edip ESLint'te tip bilgili kuralları kapatmak; lint için ayrı bir TS 6 kopyası kurmak.
+- **Neden:** Bootstrap en güncel sürüm olarak TypeScript 7.0'ı kurdu. İlk CI çalışmasında typescript-eslint "TS 7.0 desteklenmiyor" hatasıyla durdu. typescript-eslint, TS 7'yi desteklediğinde yükseltme ayrı bir PR ile yapılır.
+
 ### 2026-11-17: İlk commit doğrudan main'e
 
 - **Karar:** Boş depoda tek bir başlangıç commit'i (iskelet ve belgeler) doğrudan `main`'e atılır. Sonraki her değişiklik `faz<N>/<ad>` dalından PR ile gelir.
