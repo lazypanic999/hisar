@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Deneme B: izometrik zemin</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #14171c;
+      }
+      #hud {
+        position: fixed;
+        top: 8px;
+        left: 8px;
+        font:
+          12px/1.4 system-ui,
+          sans-serif;
+        color: #c9d1d9;
+        background: rgb(0 0 0 / 50%);
+        padding: 6px 8px;
+        border-radius: 4px;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="hud">Sürükle: kaydır · Tekerlek: yakınlaştır · <span id="fps">-</span> FPS</div>
+    <script type="module">
+      // Kurulum gerektirmesin diye PixiJS CDN'den yükleniyor. Ürün kodunda npm paketi kullanılacak.
+      import {
+        Application,
+        Container,
+        Graphics,
+      } from 'https://cdn.jsdelivr.net/npm/pixi.js@8.20.1/dist/pixi.min.mjs';
+
+      const GRID = 32;
+      const TILE_W = 64;
+      const TILE_H = 32;
+
+      // Izgara koordinatından ekran koordinatına (2:1 izometrik).
+      const toScreen = (gx, gy) => ({
+        x: (gx - gy) * (TILE_W / 2),
+        y: (gx + gy) * (TILE_H / 2),
+      });
+
+      const app = new Application();
+      await app.init({ resizeTo: window, background: '#14171c', antialias: true });
+      document.body.appendChild(app.canvas);
+
+      const world = new Container();
+      world.sortableChildren = true;
+      app.stage.addChild(world);
+
+      // Zemin: 32×32 karo, dama deseni.
+      const ground = new Graphics();
+      for (let gx = 0; gx < GRID; gx += 1) {
+        for (let gy = 0; gy < GRID; gy += 1) {
+          const { x, y } = toScreen(gx, gy);
+          const color = (gx + gy) % 2 === 0 ? 0x2f5d3a : 0x356842;
+          ground
+            .poly([
+              x,
+              y,
+              x + TILE_W / 2,
+              y + TILE_H / 2,
+              x,
+              y + TILE_H,
+              x - TILE_W / 2,
+              y + TILE_H / 2,
+            ])
+            .fill(color)
+            .stroke({ width: 1, color: 0x24472d, alpha: 0.6 });
+        }
+      }
+      ground.zIndex = -1;
+      world.addChild(ground);
+
+      // Bina: karo üzerinde yükselen kutu (üst yüz + iki yan yüz).
+      function building(gx, gy, height, top, left, right) {
+        const { x, y } = toScreen(gx, gy);
+        const hw = TILE_W / 2;
+        const hh = TILE_H / 2;
+        const g = new Graphics();
+        g.poly([
+          x - hw,
+          y + hh,
+          x,
+          y + TILE_H,
+          x,
+          y + TILE_H - height,
+          x - hw,
+          y + hh - height,
+        ]).fill(left);
+        g.poly([
+          x + hw,
+          y + hh,
+          x,
+          y + TILE_H,
+          x,
+          y + TILE_H - height,
+          x + hw,
+          y + hh - height,
+        ]).fill(right);
+        g.poly([
+          x,
+          y - height,
+          x + hw,
+          y + hh - height,
+          x,
+          y + TILE_H - height,
+          x - hw,
+          y + hh - height,
+        ]).fill(top);
+        // Arkadaki bina öne geçmesin: derinlik gx + gy.
+        g.zIndex = gx + gy;
+        return g;
+      }
+
+      const buildings = [
+        [16, 16, 48, 0xd9a441, 0x9c7228, 0xb88a33], // şehir meydanı
+        [14, 17, 24, 0xb8b8c0, 0x7d7d86, 0x9a9aa3],
+        [18, 15, 32, 0xc0614a, 0x84402f, 0xa1503c],
+        [15, 13, 64, 0x8a8fa8, 0x5b5f72, 0x71768c],
+        [19, 18, 20, 0x6aa0c8, 0x456c88, 0x5786a8],
+      ];
+      for (const [gx, gy, h, top, left, right] of buildings) {
+        world.addChild(building(gx, gy, h, top, left, right));
+      }
+
+      // Başlangıç: haritayı ekranın ortasına al.
+      const center = toScreen(GRID / 2, GRID / 2);
+      world.position.set(app.screen.width / 2 - center.x, app.screen.height / 2 - center.y);
+
+      // Kaydırma
+      let drag = null;
+      app.stage.eventMode = 'static';
+      app.stage.hitArea = app.screen;
+      app.stage.on('pointerdown', (e) => {
+        drag = { x: e.global.x - world.x, y: e.global.y - world.y };
+      });
+      app.stage.on('pointermove', (e) => {
+        if (drag) world.position.set(e.global.x - drag.x, e.global.y - drag.y);
+      });
+      app.stage.on('pointerup', () => (drag = null));
+      app.stage.on('pointerupoutside', () => (drag = null));
+
+      // Yakınlaştırma: imlecin altındaki nokta yerinde kalır.
+      app.canvas.addEventListener(
+        'wheel',
+        (e) => {
+          e.preventDefault();
+          const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
+          const next = Math.min(3, Math.max(0.25, world.scale.x * factor));
+          const before = world.toLocal({ x: e.offsetX, y: e.offsetY });
+          world.scale.set(next);
+          const after = world.toGlobal(before);
+          world.position.set(world.x + (e.offsetX - after.x), world.y + (e.offsetY - after.y));
+        },
+        { passive: false },
+      );
+
+      const fps = document.getElementById('fps');
+      app.ticker.add(() => {
+        fps.textContent = Math.round(app.ticker.FPS);
+      });
+    </script>
+  </body>
+</html>
