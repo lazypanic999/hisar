@@ -1,0 +1,26 @@
+{
+  "name": "hisar",
+  "private": true,
+  "type": "module",
+  "description": "GitHub geçmişini zamanda ilerleyen bir strateji oyunu üssüne çevirir.",
+  "scripts": {
+    "bootstrap": "node scripts/bootstrap.mjs",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "build": "pnpm -r --if-present build"
+  },
+  "packageManager": "pnpm@12.21.0",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.15.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.14.0",
+    "prettier": "^3.10.1",
+    "typescript": "^7.0.2",
+    "typescript-eslint": "^8.72.2",
+    "vitest": "^5.1.0"
+  }
+}

@@ -1,0 +1,7 @@
+pnpm-lock.yaml
+node_modules
+dist
+coverage
+.wrangler
+# Planın birebir kopyası; biçimi kaynak dokümanla aynı kalmalı.
+docs/PLAN.md

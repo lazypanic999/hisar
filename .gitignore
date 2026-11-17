@@ -1,0 +1,25 @@
+node_modules/
+dist/
+coverage/
+*.log
+
+# Gizli değerler
+.env
+.env.*
+!.env.example
+.dev.vars
+
+# Cloudflare / OpenTofu
+.wrangler/
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+
+# Playwright
+playwright-report/
+test-results/
+
+# İşletim sistemi
+.DS_Store
+Thumbs.db
